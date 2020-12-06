@@ -72,6 +72,7 @@ int main(int argc, char const *argv[])
 		pthread_create(&id[i],NULL,&simple_thread,&a);
 		pthread_join(id[i],NULL);
 	}
-
+	free(id);
+	free(res.arr);
 	return 0;
 }

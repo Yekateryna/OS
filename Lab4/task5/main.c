@@ -58,6 +58,7 @@ int main(int argc, char const *argv[])
 			my_sys(buffer);
 		}
 	}
+	free(buffer);
 	return 0;
 }
 

@@ -3,27 +3,30 @@
 #include <unistd.h>
 #include <pthread.h>
 
-void cancel_handler()
+void clean_buf(void* buffer)
 {
-	int num = 0;
-	printf("Thread canceled at %d iteration\n", num);
+	free(buffer);
+	printf("%s\n", "buffer cleaned");
 }
 
-void* thread()
+void thread()
 {
-	int i=0;
+	void* mem = malloc(1024);
+	
+	pthread_cleanup_push(clean_buf,mem);
+	
+	int i = 0;
 	while(1)
 	{
 		printf("Iteration # %d\n", i);
 		i++;
 		sleep(1);
 	}
-	return NULL;
+	pthread_cleanup_pop(1);
 }
 
 int main(int argc, char const *argv[])
 {
-	
 	setbuf(stdout,NULL);
 	void* result;
 	int num;

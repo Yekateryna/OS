@@ -59,7 +59,8 @@ int* erat(int n)
 		printf(stderr,"%s\n", "Out of memory");
 	}
 	current[counter-1] = NULL;
-
+	free(tmp);
+	free(begining);
 	return current;
 }
 

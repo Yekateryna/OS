@@ -4,20 +4,20 @@
 #include <pthread.h>
 
 static pthread_key_t key;
+pthread_once_t ont = PTHREAD_ONCE_INIT;
+
+void once_init()
+{
+	char tmp[50];
+	sprintf(tmp,"Thread #%d rand = ",pthread_self());
+	pthread_setspecific(key,tmp);
+}
 
 void thread_func()
 {
 	int count = 1+rand()%10;
+	pthread_once(ont,once_init);
 	char* str = (char*)pthread_getspecific(key);
-
-	if (str == NULL)
-	{
-		char tmp[50];
-		sprintf(tmp,"Thread #%d rand = ",pthread_self());
-		pthread_setspecific(key,tmp);
-		str = (char*)pthread_getspecific(key);		
-	}
-
 	for (int i = 0; i < count; ++i)
 	{
 		printf("%s%d\n",str,1+rand()%10);

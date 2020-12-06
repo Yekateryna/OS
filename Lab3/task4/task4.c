@@ -54,6 +54,7 @@ int main(int argc, char const *argv[])
 			system(buffer);
 		}
 	}
+	free(buffer);
 	return 0;
 }
 

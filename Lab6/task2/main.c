@@ -5,6 +5,7 @@
 
 void* thread()
 {
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
 	int i=0;
 	while(1)
 	{
