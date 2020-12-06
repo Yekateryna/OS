@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/shm.h>
+#include <sys/types.h>
+#include <sys/sem.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -9,7 +11,8 @@ int* shm_buf;
 int shm_id = -1;
 int n = 0;
 int sem_id = -1;
-struct sem_buf sb[1];
+struct sembuf sb[1];
+
 
 static void handler(int signo, siginfo_t *info, void* extr)
 {
@@ -58,11 +61,13 @@ int main(void)
 	while(flag == 0){pause();}
 	flag=0;
 
-	sb[0].sem_flg = 0;
-
 	while(1){
-		
-		for (int i = 1; i < n; ++i)
+		sb[0].sem_num = 0;
+		sb[0].sem_op = -1;
+		semop(sem_id,sb,1);
+
+		int i = semctl(sem_id,0,GETVAL,NULL);
+		if (i != 0)
 		{
 			shm_buf[0]+=shm_buf[i];
 		}

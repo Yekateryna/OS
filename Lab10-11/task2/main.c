@@ -5,13 +5,14 @@
 #include <sys/sem.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 
 int flag = 0;
 int chid;
 int* shm_buf;
 int shm_id;
 int sem_id;
-struct sem_buf sb[1];
+struct sembuf sb[1];
 
 union semnum {
 	int val;
@@ -29,6 +30,7 @@ static void handler(int signo)
 		printf("Child exit with code %d\n", code);
 		shmdt(shm_buf);
 		shmctl(shm_id,IPC_RMID,NULL);
+		semctl(sem_id,IPC_RMID,NULL);
 		exit(0);
 
 	}
@@ -41,6 +43,7 @@ static void handler(int signo)
 void error_exit()
 {
 	printf("%s\n", "Error exit handler started");
+	printf("Error code : %d\n", errno);
 	raise(SIGINT);
 }
 
@@ -87,15 +90,15 @@ int main(int argc, char const *argv[])
 			error_exit();
 		}
 
-		sem_id = semget(IPC_PRIVATE,1,IPC_CREAT|IPC_EXCL|0600);
-		if (sem_id = -1)
+		sem_id = semget(IPC_PRIVATE,1,0600|IPC_CREAT|IPC_EXCL);
+		if (sem_id == -1)
 		{
 			fprintf(stderr, "%s\n", "semget error");
 			error_exit();
 		}
 		unsigned short int sem_vals[1] = {0};
 		sem_arg.array = sem_vals;
-		if (semctl(sem_id,0,SETALL,sem_arg)=-1)
+		if (semctl(sem_id,0,SETALL,sem_arg)==-1)
 		{
 			fprintf(stderr, "%s\n", "semctl error");
 			error_exit();
@@ -114,7 +117,7 @@ int main(int argc, char const *argv[])
 		flag = 0;
 
 		printf("sem_id = %d\n",sem_id);
-		sigqueue(chid,SIGUSR1,(const union sigval)shm_sem);
+		sigqueue(chid,SIGUSR1,(const union sigval)sem_id);
 
 
 		int read;
@@ -133,9 +136,6 @@ int main(int argc, char const *argv[])
 				printf("arr[%d] = ", i);
 				scanf("%d",&shm_buf[i]);
 				printf("\n");
-				sb[0].sem_num = 0;
-				sb[0].sem_op = 1;
-				semop(sem_id,sb,1);
 			}
 
 			//sigqueue(chid,SIGUSR1,(const union sigval)read);
@@ -143,6 +143,10 @@ int main(int argc, char const *argv[])
 			while(flag == 0){pause();}
 			flag = 0;
 			*/
+			sb[0].sem_num = 0;
+			sb[0].sem_op = read;
+			semop(sem_id,sb,1);
+
 			sb[0].sem_num = 0;
 			sb[0].sem_op = 0;
 			semop(sem_id,sb,1);
