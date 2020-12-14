@@ -5,24 +5,32 @@
 
 struct Thread_data
 {
-	pthread_cond_t cond;
+	pthread_cond_t cons;
+	pthread_cond_t prod;
 	pthread_mutex_t mutex;
 	int data;
+	int flag;
 };
 
 void Thread_data_init(struct Thread_data* data)
 {
-	if (pthread_cond_init(&(data->cond),NULL))
+	if (pthread_cond_init(&(data->cons),NULL))
+	{
+		printf("%s\n", "error when cond init");
+	}
+	if (pthread_cond_init(&(data->prod),NULL))
 	{
 		printf("%s\n", "error when cond init");
 	}
 	pthread_mutex_init(&(data->mutex),NULL);
 	data->data = 0;
+	data->flag = 0;
 }
 
 void Thread_data_destroy(struct Thread_data* data)
 {
-	pthread_cond_destroy(&(data->cond));
+	pthread_cond_destroy(&(data->prod));
+	pthread_cond_destroy(&(data->cons));
 	pthread_mutex_destroy(&(data->mutex));
 }
 
@@ -33,8 +41,13 @@ void producer(void* arg)
 	{
 		int r = 1+rand()%100;
 		pthread_mutex_lock(&(data->mutex));
+		while(data->flag==1)
+		{
+			pthread_cond_wait(&(data->prod),&(data->mutex));
+		}
 		data->data = r;
-		pthread_cond_signal(&(data->cond));
+		data->flag = 1;
+		pthread_cond_signal(&(data->cons));
 		pthread_mutex_unlock(&(data->mutex));
 		sleep(5);
 	}
@@ -47,11 +60,16 @@ void consumer(void* arg)
 	{
 		int read;
 		pthread_mutex_lock(&(data->mutex));
-		pthread_cond_wait(&(data->cond),&(data->mutex));
+		while(data->flag==0)
+		{
+			pthread_cond_wait(&(data->cons),&(data->mutex));
+		}
 		read = data->data;
+		data->flag = 0;
+		pthread_cond_signal(&(data->prod));
 		pthread_mutex_unlock(&(data->mutex));
 		printf("%d\n", read);
-		sleep(5);
+		//sleep(5);
 	}
 }
 
