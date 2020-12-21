@@ -7,50 +7,34 @@
 #include <signal.h>
 
 
-int flag = 0;
-static void handler(int signo)
-{
-	if (signo == SIGUSR1)
-	{
-		flag = 1;
-	}
-}
 int main(int argc, char const *argv[])
 {
-	if (signal(SIGUSR1,handler)==SIG_ERR)
+	char* parent = "parent.fifo";
+	char* child = "child.fifo";
+	int fd_p, fd_ch;
+
+	if ((fd_p=open(parent,O_RDONLY))<0)
 	{
-		fprintf(stderr, "%s\n", "signal error");
+		fprintf(stderr, "%s\n","Child: fd_p open error" );
 	}
-	int fd_p;
-	int fd_ch;
-	size_t size;
-
-	char name_p[] = "parent.fifo";
-	char name_ch[] = "child.fifo";
-
-	char buf[256];
-	umask(0);
-	while(flag == 0)
+	if ((fd_ch=open(child,O_WRONLY))<0)
 	{
-		pause();
+		fprintf(stderr, "%s\n","Child: fd_ch open error" );
 	}
 
-	if (fd_p=open(name_p,O_RDONLY)<0)
-	{
-		fprintf(stderr, "%s\n","error child: p open" );
-	}
+	char str[256];
 	
-	while(read(fd_p,buf,256)==0);
+	read(fd_p,str,256);
 
-	for (int i = 0; i < 256; ++i)
+	for (int i = 0; i < strlen(str); ++i)
 	{
-		buf[i] = toupper(buf[i]);
+		str[i] = toupper(str[i]);
 	}
-	if (fd_p=open(name_ch,O_WRONLY)<0)
-	{
-		fprintf(stderr, "%s\n","error child ch open" );
-	}
-	size = write(fd_ch,buf,256);
-	close(fd_p);
+
+	write(fd_ch,str,256);
 	close(fd_ch);
+	close(fd_p);
+
+	return 0;	
 }
+
